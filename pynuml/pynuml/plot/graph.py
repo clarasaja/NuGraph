@@ -40,7 +40,7 @@ class GraphPlot:
             df['y_filter'] = plane['y_semantic'] != -1
             mask = df.y_filter.values
             df['y_semantic'] = to_categorical(plane['y_semantic'])
-            df['y_instance'] = plane['y_instance'].numpy().astype(str)
+            #df['y_instance'] = plane['y_instance'].numpy().astype(str)
 
             # add detailed truth information if it's available
             for col in self._truth_cols:
@@ -112,40 +112,6 @@ class GraphPlot:
                 }
             else:
                 raise Exception('for semantic labels, "how" must be one of "true", "pred" or the name of a class.')
-
-        # instance labels
-        elif target == 'instance':
-            if how == 'true':
-                opts = {
-                    'title': 'True instance labels',
-                    'labels': { 'y_instance': 'Instance label' },
-                    'color': 'y_instance',
-                    'symbol': 'y_semantic',
-                    'color_discrete_map': self._cmap,
-                }
-            elif how == 'pred':
-                opts = {
-                    'title': 'Predicted instance labels',
-                    'labels': { 'i': 'Instance label' },
-                    'color': 'i',
-                    'color_discrete_map': self._cmap,
-                }
-            elif how == 'beta':
-                opts = {
-                    'title': 'Object condensation beta values',
-                    'color': 'logbeta',
-                    'color_continuous_scale': px.colors.sequential.Reds,
-                }
-            elif how == 'pca':
-                opts = {
-                    'title': 'Object condensation coordinates',
-                    'labels': { 'y_instance': 'Instance label' },
-                    'color': 'y_instance',
-                    'color_discrete_map': self._cmap,
-                }
-            else:
-                raise Exception('for instance labels, "how" must be one of "true", "pred", "beta" or "pca".')
-
         # filter labels
         elif target == 'filter':
             if how == 'true':
@@ -171,7 +137,7 @@ class GraphPlot:
         if filter == 'none':
             # don't do any filtering
             pass
-        elif filter == 'show':
+        elif filter == 'show': #HA SENSO SOLO CON semantic pred 
             # show hits predicted to be background in grey
             if target == 'semantic' and how == 'pred':
                 df.x_semantic[df.x_filter < self.filter_threshold] = 'background'
@@ -204,14 +170,14 @@ class GraphPlot:
         # set hover data
         opts['hover_data'] = {
             'y_semantic': True,
-            "y_instance": True,
+            #"y_instance": True,
             'wire': ':.1f',
             'time': ':.1f',
         }
         opts['labels'] = {
             'y_filter': 'filter truth',
             'y_semantic': 'semantic truth',
-            'y_instance': 'instance truth',
+            #'y_instance': 'instance truth',
         }
         if 'x_filter' in df:
             opts['hover_data']['x_filter'] = True
