@@ -19,8 +19,9 @@ class Event:
 
     @property
     def name(self):
-        r, sr, evt = self.event_id
-        return f'r{r}_sr{sr}_evt{evt}'
+        #run, subrun, event, timestamp
+        r, sr, evt, ts= self.event_id
+        return f'r{r}_sr{sr}_evt{evt}_ts{ts}'
 
     def __setitem__(self, key: str, item: pd.DataFrame):
         if type(key) != str:
@@ -195,7 +196,7 @@ class File:
     def _cols(self,
               group: str,
               key: str) -> List[str]:
-        if key == self._par_name: return [ "run", "subrun", "event" ]
+        if key == self._par_name: return [ "run", "subrun", "event", "timestamp" ]
         if group in self._colmap and key in self._colmap[group].keys(): return self._colmap[group][key]
         elif self._fd[group][key].shape[1]==1: return [key]
         else: return [ key+"_"+str(c) for c in range(0,self._fd[group][key].shape[1])]
@@ -208,7 +209,7 @@ class File:
             if self._seq_name in keys: keys.remove(self._seq_name)
             if self._cnt_name in keys: keys.remove(self._cnt_name)
         dfs = [ pd.DataFrame(np.array(self._fd[group][key]), columns=self._cols(group, key)) for key in keys ]
-        return pd.concat(dfs, axis="columns").set_index(["run","subrun","event"])
+        return pd.concat(dfs, axis="columns").set_index(["run","subrun","event","timestamp"])
 
     def get_dataframe_evt(self,
                           group: str,

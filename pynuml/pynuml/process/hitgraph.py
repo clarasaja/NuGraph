@@ -164,10 +164,11 @@ class HitGraphProducer(ProcessorBase):
         data = pyg.data.HeteroData()
 
         # event metadata
-        r, sr, e = evt.event_id
+        r, sr, e, ts = evt.event_id
         data['metadata'].run = r
         data['metadata'].subrun = sr
         data['metadata'].event = e
+        data['metadata'].timestamp = ts
 
         # spacepoint nodes
         if "position_x" in spacepoints.keys():
