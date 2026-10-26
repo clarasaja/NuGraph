@@ -215,6 +215,7 @@ class HitGraphProducer(ProcessorBase):
             if self.semantic_labeller:
                 data[p].y_semantic = torch.tensor(plane_hits['semantic_label'].fillna(-1).values).long()
                 data[p].y_semantic[data[p].y_semantic > 4] = -1
+                data[p].from_nu = torch.tensor(plane_hits['from_nu'].fillna(0).values).bool()
                 #data[p].y_instance = torch.tensor(plane_hits['instance_label'].fillna(-1).values).long()
                 if self.store_detailed_truth:
                     data[p].g4_id = torch.tensor(plane_hits['g4_id'].fillna(-1).values).long()
