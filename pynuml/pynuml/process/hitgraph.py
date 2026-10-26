@@ -143,7 +143,7 @@ class HitGraphProducer(ProcessorBase):
                     hits = hits.merge(particles, on='g4_id', how='left')
                     hits = hits.merge(evt['particle_table'][['from_nu','g4_id']], on='g4_id', how='left')
                     #consider cosmics as background
-                    hits.loc[hits['from_nu']==0, "semantic_label"] = -1
+                    # hits.loc[hits['from_nu']==0, "semantic_label"] = -1
                 except:
                     print('exception occurred when merging hits and particles')
                     print('hit table:', hits)
