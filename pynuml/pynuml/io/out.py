@@ -31,9 +31,35 @@ class H5Out:
     def __init__(self, fname: str, overwrite: bool = False):
         # This implements one-file-per-process I/O strategy.
         # append MPI process rank to the output file name
-        rank = MPI.COMM_WORLD.Get_rank()
-        file_ext = ".{:04d}.h5"
-        self.fname = fname + file_ext.format(rank)
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        size = comm.Get_size()
+        
+        # Find the next available global output index for this output prefix,
+        # so consecutive MPI processing runs do not reuse existing filenames.
+        # Rank 0 scans the existing files and broadcasts the next index to all ranks.
+        # Each rank then adds its rank to the starting index to obtain a unique filename.
+        if rank == 0:
+            import glob
+            import re
+        
+            pattern = re.compile(re.escape(fname) + r"\.(\d+)\.h5$")
+            existing_files = glob.glob(fname + ".*.h5")
+        
+            indices = [
+                int(match.group(1))
+                for path in existing_files
+                if (match := pattern.fullmatch(path))
+            ]
+        
+            next_index = max(indices, default=-1) + 1
+        else:
+            next_index = None
+    
+        next_index = comm.bcast(next_index, root=0)
+        file_index = next_index + rank
+        self.fname = fname + f".{file_index:04d}.h5"
+        
         if os.path.exists(self.fname):
             if overwrite:
                 os.remove(self.fname)
