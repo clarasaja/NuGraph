@@ -16,6 +16,7 @@ from .transform import Transform
 
 from ...data import H5DataModule
 from ...util import InputNorm
+from ...utils.FeatureExtension import calculate_features
 
 T = torch.Tensor
 TD = dict[str, T]
@@ -51,6 +52,8 @@ class NuGraph2InferenceModule(torch.nn.Module):
                 nexus: torch.Tensor,
                 batch: dict[str, torch.Tensor]) -> dict[str, dict[str, torch.Tensor]]:
         
+        # Apply feature extension only when normalization factors are provided
+        # (i.e. when the model was trained with --featext).
         if self.normf is not None:
             for p in self.planes:
                 # Reconstruct physical wire and time coordinates from normalized features
@@ -60,9 +63,7 @@ class NuGraph2InferenceModule(torch.nn.Module):
                 ), dim=1)
 
                 # Calculate the four extended features and append them to the input
-                extended_vars = FeatureExtension.calculate_features(
-                    wt_coords, edge_index_plane[p]
-                )
+                extended_vars = calculate_features(wt_coords, edge_index_plane[p])
                 x[p] = torch.cat((x[p], extended_vars), dim=-1)
         
         m = self.encoder(x)
