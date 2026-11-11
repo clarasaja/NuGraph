@@ -16,7 +16,7 @@ from .transform import Transform
 
 from ...data import H5DataModule
 from ...util import InputNorm
-from ...utils.FeatureExtension import calculate_features
+from ...util.feature_extension import calculate_features
 
 T = torch.Tensor
 TD = dict[str, T]
@@ -61,9 +61,12 @@ class NuGraph2InferenceModule(torch.nn.Module):
                     x[p][:, 0] * self.normf[p][1][0] + self.normf[p][0][0],
                     x[p][:, 1] * self.normf[p][1][1] + self.normf[p][0][1]
                 ), dim=1)
+                
+                # Use local indices for the nodes of the current plane
+                idx = torch.arange(x[p].shape[0], device=x[p].device)
 
                 # Calculate the four extended features and append them to the input
-                extended_vars = calculate_features(wt_coords, edge_index_plane[p])
+                extended_vars = calculate_features(wt_coords, edge_index_plane[p],idx)
                 x[p] = torch.cat((x[p], extended_vars), dim=-1)
         
         m = self.encoder(x)
