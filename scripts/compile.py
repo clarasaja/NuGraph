@@ -40,7 +40,7 @@ def compile(args):
     model = ng.models.NuGraph2.load_from_checkpoint(args.checkpoint, map_location='cpu')
 
     print('exporting TorchScript module...')
-    scripted = model.export()
+    scripted = model.export(normf if args.featext else None)
 
     print('output file =', args.outfile)
     torch.jit.save(scripted, args.outfile)

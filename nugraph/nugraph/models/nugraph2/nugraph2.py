@@ -33,7 +33,7 @@ class NuGraph2InferenceModule(torch.nn.Module):
 
     def __init__(self, encoder, plane_net, nexus_net,
                  semantic_decoder, filter_decoder,
-                 planes: list[str], semantic_classes: list[str], num_iters: int):
+                 planes: list[str], semantic_classes: list[str], num_iters: int, normf: dict[str, torch.Tensor] | None = None):
         super().__init__()
         self.encoder = encoder
         self.plane_net = plane_net
@@ -43,12 +43,28 @@ class NuGraph2InferenceModule(torch.nn.Module):
         self.planes = planes
         self.semantic_classes = semantic_classes
         self.num_iters: int = num_iters
+        self.normf = normf
 
     def forward(self, x: dict[str, torch.Tensor],
                 edge_index_plane: dict[str, torch.Tensor],
                 edge_index_nexus: dict[str, torch.Tensor],
                 nexus: torch.Tensor,
                 batch: dict[str, torch.Tensor]) -> dict[str, dict[str, torch.Tensor]]:
+        
+        if self.normf is not None:
+            for p in self.planes:
+                # Reconstruct physical wire and time coordinates from normalized features
+                wt_coords = torch.stack((
+                    x[p][:, 0] * self.normf[p][1][0] + self.normf[p][0][0],
+                    x[p][:, 1] * self.normf[p][1][1] + self.normf[p][0][1]
+                ), dim=1)
+
+                # Calculate the four extended features and append them to the input
+                extended_vars = FeatureExtension.calculate_features(
+                    wt_coords, edge_index_plane[p]
+                )
+                x[p] = torch.cat((x[p], extended_vars), dim=-1)
+        
         m = self.encoder(x)
         s = {p: x[p].detach().unsqueeze(1).expand(-1, len(self.semantic_classes), -1)
              for p in self.planes}
@@ -256,7 +272,7 @@ class NuGraph2(LightningModule): # pylint: disable=too-many-instance-attributes
                 total_steps=self.trainer.estimated_stepping_batches)
         return [optimizer], {'scheduler': onecycle, 'interval': 'step'}
 
-    def export(self) -> torch.jit.ScriptModule:
+    def export(self, normf: dict[str, torch.Tensor] | None = None) -> torch.jit.ScriptModule:
         """
         Export a TorchScript-compatible module for inference.
 
@@ -282,7 +298,8 @@ class NuGraph2(LightningModule): # pylint: disable=too-many-instance-attributes
             filter_decoder=filter_decoder,
             planes=list(self.planes),
             semantic_classes=list(self.semantic_classes),
-            num_iters=self.num_iters)
+            num_iters=self.num_iters,
+            normf=normf)
         m.eval()
         return torch.jit.script(m)
 
