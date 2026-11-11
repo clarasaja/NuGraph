@@ -1,4 +1,4 @@
-    """Transform to add set of extended features to planar nodes"""
+"""Transform to add set of extended features to planar nodes"""
 import torch
 from torch_geometric.transforms import BaseTransform
 
