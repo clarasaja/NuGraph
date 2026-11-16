@@ -32,7 +32,7 @@ def compile(args):
                 }
         except (TypeError, OSError, KeyError) as e:
             raise ValueError(
-                "--featext requires a valid --inputfile containing norm/u, norm/v and norm/y"
+                "--featext requires a valid --infile containing norm/u, norm/v and norm/y"
             ) from e
     # print ('norm ', normf)
 
