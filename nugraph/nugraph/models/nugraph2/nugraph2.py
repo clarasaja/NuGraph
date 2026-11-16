@@ -56,17 +56,22 @@ class NuGraph2InferenceModule(torch.nn.Module):
         # (i.e. when the model was trained with --featext).
         if self.normf is not None:
             for p in self.planes:
-                # Reconstruct physical wire and time coordinates from normalized features
-                wt_coords = torch.stack((
-                    x[p][:, 0] * self.normf[p][1][0] + self.normf[p][0][0],
-                    x[p][:, 1] * self.normf[p][1][1] + self.normf[p][0][1]
-                ), dim=1)
+                # If the plane has too few hits or edges, use zero-valued extended features to avoid crashes in LArSoft.
+                if len(edge_index_plane[p])<2 or edge_index_plane[p].shape[1]<3:
+                    extended_vars = torch.cat((zeros(x[p].shape[0],1), zeros(x[p].shape[0],1), zeros(x[p].shape[0],1), zeros(x[p].shape[0],1))
+                else:
+                    # Reconstruct physical wire and time coordinates from normalized features
+                    wt_coords = torch.stack((
+                        x[p][:, 0] * self.normf[p][1][0] + self.normf[p][0][0],
+                        x[p][:, 1] * self.normf[p][1][1] + self.normf[p][0][1]
+                    ), dim=1)
+                    
+                    # Use local indices for the nodes of the current plane
+                    idx = torch.arange(x[p].shape[0], device=x[p].device)
+    
+                    # Calculate the four extended features and append them to the input
+                    extended_vars = calculate_features(wt_coords, edge_index_plane[p],idx)
                 
-                # Use local indices for the nodes of the current plane
-                idx = torch.arange(x[p].shape[0], device=x[p].device)
-
-                # Calculate the four extended features and append them to the input
-                extended_vars = calculate_features(wt_coords, edge_index_plane[p],idx)
                 x[p] = torch.cat((x[p], extended_vars), dim=-1)
         
         m = self.encoder(x)
