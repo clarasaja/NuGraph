@@ -57,8 +57,8 @@ class NuGraph2InferenceModule(torch.nn.Module):
         if self.normf is not None:
             for p in self.planes:
                 # If the plane has too few hits or edges, use zero-valued extended features to avoid crashes in LArSoft.
-                if len(edge_index_plane[p])<2 or edge_index_plane[p].shape[1]<3:
-                    extended_vars = torch.cat((zeros(x[p].shape[0],1), zeros(x[p].shape[0],1), zeros(x[p].shape[0],1), zeros(x[p].shape[0],1))
+                if len(edge_index_plane[p]) < 2 or edge_index_plane[p].shape[1] < 3:
+                    extended_vars = torch.zeros((x[p].shape[0], 4),dtype=x[p].dtype,device=x[p].device)
                 else:
                     # Reconstruct physical wire and time coordinates from normalized features
                     wt_coords = torch.stack((
